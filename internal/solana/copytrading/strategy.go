@@ -3,13 +3,13 @@ package copytrading
 import (
 	"github.com/pararti/solana-botyara/internal/config"
 	"github.com/pararti/solana-botyara/internal/solana"
-	"go.uber.org/zap"
+	"log"
 )
 
 // Strategy represents a copytrading strategy
 type Strategy struct {
 	config *config.Config
-	logger *zap.Logger
+	logger *log.Logger
 
 	// Strategy parameters
 	maxSlippage  float64
@@ -23,7 +23,7 @@ type Strategy struct {
 }
 
 // NewStrategy creates a new copytrading strategy
-func NewStrategy(cfg config.Config, logger *zap.Logger) *Strategy {
+func NewStrategy(cfg config.Config, logger *log.Logger) *Strategy {
 	// Convert token lists to maps for faster lookups
 	whitelist := make(map[string]bool)
 	for _, token := range cfg.Strategy.TokenWhitelist {
@@ -56,33 +56,33 @@ func (s *Strategy) ShouldCopyTrade(tx *solana.Transaction) bool {
 	// Check token whitelist (if empty, allow all tokens)
 	if len(s.tokenWhitelist) > 0 {
 		if !s.tokenWhitelist[tx.FromToken] || !s.tokenWhitelist[tx.ToToken] {
-			s.logger.Debug("Transaction skipped: token not in whitelist",
-				zap.String("fromToken", tx.FromToken),
-				zap.String("toToken", tx.ToToken))
+			s.logger.Println("Transaction skipped: token not in whitelist",
+				tx.FromToken,
+				tx.ToToken)
 			return false
 		}
 	}
 
 	// Check token blacklist
 	if s.tokenBlacklist[tx.FromToken] || s.tokenBlacklist[tx.ToToken] {
-		s.logger.Debug("Transaction skipped: token in blacklist",
-			zap.String("fromToken", tx.FromToken),
-			zap.String("toToken", tx.ToToken))
+		s.logger.Println("Transaction skipped: token in blacklist",
+			tx.FromToken,
+			tx.ToToken)
 		return false
 	}
 
 	// Check trade size
 	if float64(tx.FromAmount) < s.minTradeSize {
-		s.logger.Debug("Transaction skipped: trade size too small",
-			zap.Uint64("amount", tx.FromAmount),
-			zap.Float64("minTradeSize", s.minTradeSize))
+		s.logger.Println("Transaction skipped: trade size too small",
+			"amount", tx.FromAmount,
+			"minTradeSize", s.minTradeSize)
 		return false
 	}
 
 	if float64(tx.FromAmount) > s.maxTradeSize {
-		s.logger.Debug("Transaction skipped: trade size too large",
-			zap.Uint64("amount", tx.FromAmount),
-			zap.Float64("maxTradeSize", s.maxTradeSize))
+		s.logger.Println("Transaction skipped: trade size too large",
+			tx.FromAmount,
+			"maxTradeSize", s.maxTradeSize)
 		return false
 	}
 

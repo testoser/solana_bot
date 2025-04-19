@@ -65,9 +65,6 @@ func (w *Wallet) Sign(tx *solana.Transaction) error {
 func (w *Wallet) CreateSwapTransaction(
 	ctx context.Context,
 	client *Client,
-	fromToken string,
-	toToken string,
-	amount uint64,
 ) (*solana.Transaction, error) {
 	// This is a simplified example. In a real implementation, you would:
 	// 1. Find the best route for the swap (using Jupiter or another DEX aggregator)

@@ -2,24 +2,24 @@ package copytrading
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/pararti/solana-botyara/internal/solana"
-	"go.uber.org/zap"
 )
 
 // Monitor monitors wallets for transactions
 type Monitor struct {
 	client  *solana.Client
 	wallets []string
-	logger  *zap.Logger
+	logger  *log.Logger
 
 	// Last seen transactions to avoid duplicates
 	lastSeen map[string]time.Time
 }
 
 // NewMonitor creates a new wallet monitor
-func NewMonitor(client *solana.Client, wallets []string, logger *zap.Logger) *Monitor {
+func NewMonitor(client *solana.Client, wallets []string, logger *log.Logger) *Monitor {
 	return &Monitor{
 		client:   client,
 		wallets:  wallets,
@@ -30,7 +30,7 @@ func NewMonitor(client *solana.Client, wallets []string, logger *zap.Logger) *Mo
 
 // Start starts monitoring wallets for transactions
 func (m *Monitor) Start(ctx context.Context, txCh chan<- *solana.Transaction) {
-	m.logger.Info("Starting wallet monitoring", zap.Strings("wallets", m.wallets))
+	m.logger.Println("Starting wallet monitoring", "wallets", m.wallets)
 
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -40,7 +40,7 @@ func (m *Monitor) Start(ctx context.Context, txCh chan<- *solana.Transaction) {
 		case <-ticker.C:
 			m.checkWallets(ctx, txCh)
 		case <-ctx.Done():
-			m.logger.Info("Stopping wallet monitoring")
+			m.logger.Println("Stopping wallet monitoring")
 			return
 		}
 	}
@@ -52,7 +52,7 @@ func (m *Monitor) checkWallets(ctx context.Context, txCh chan<- *solana.Transact
 		go func(address string) {
 			transactions, err := m.client.GetTransactions(ctx, address)
 			if err != nil {
-				m.logger.Error("Failed to get transactions", zap.Error(err), zap.String("wallet", address))
+				m.logger.Println("Failed to get transactions", err, "wallet")
 				return
 			}
 
@@ -71,9 +71,9 @@ func (m *Monitor) checkWallets(ctx context.Context, txCh chan<- *solana.Transact
 				// Send to channel for processing
 				select {
 				case txCh <- tx:
-					m.logger.Debug("New transaction detected",
-						zap.String("wallet", address),
-						zap.String("signature", tx.Signature))
+					m.logger.Println("New transaction detected",
+						"wallet", address,
+						"signature", tx.Signature)
 				case <-ctx.Done():
 					return
 				}
