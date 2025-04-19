@@ -2,9 +2,9 @@ package copytrading
 
 import (
 	"context"
+	"log"
 
 	"github.com/pararti/solana-botyara/internal/solana"
-	"go.uber.org/zap"
 )
 
 // Executor executes trades based on the strategy
@@ -12,11 +12,11 @@ type Executor struct {
 	client   *solana.Client
 	wallet   *solana.Wallet
 	strategy *Strategy
-	logger   *zap.Logger
+	logger   *log.Logger
 }
 
 // NewExecutor creates a new trade executor
-func NewExecutor(client *solana.Client, wallet *solana.Wallet, strategy *Strategy, logger *zap.Logger) *Executor {
+func NewExecutor(client *solana.Client, wallet *solana.Wallet, strategy *Strategy, logger *log.Logger) *Executor {
 	return &Executor{
 		client:   client,
 		wallet:   wallet,
@@ -32,11 +32,11 @@ func (e *Executor) ProcessTransaction(ctx context.Context, tx *solana.Transactio
 		return
 	}
 
-	e.logger.Info("Copying trade",
-		zap.String("signature", tx.Signature),
-		zap.String("fromToken", tx.FromToken),
-		zap.String("toToken", tx.ToToken),
-		zap.Uint64("fromAmount", tx.FromAmount))
+	e.logger.Println("Copying trade",
+		"signature", tx.Signature,
+		"fromToken", tx.FromToken,
+		"toToken", tx.ToToken,
+		"fromAmount", tx.FromAmount)
 
 	// Adjust the trade amount based on our strategy
 	amount := e.strategy.AdjustTradeAmount(tx.FromAmount)
@@ -45,32 +45,29 @@ func (e *Executor) ProcessTransaction(ctx context.Context, tx *solana.Transactio
 	swapTx, err := e.wallet.CreateSwapTransaction(
 		ctx,
 		e.client,
-		tx.FromToken,
-		tx.ToToken,
-		amount,
 	)
 	if err != nil {
-		e.logger.Error("Failed to create swap transaction", zap.Error(err))
+		e.logger.Println("Failed to create swap transaction", err)
 		return
 	}
 
 	// Sign the transaction
 	err = e.wallet.Sign(swapTx)
 	if err != nil {
-		e.logger.Error("Failed to sign transaction", zap.Error(err))
+		e.logger.Println("Failed to sign transaction")
 		return
 	}
 
 	// Send the transaction
 	signature, err := e.client.SendTransaction(ctx, swapTx)
 	if err != nil {
-		e.logger.Error("Failed to send transaction", zap.Error(err))
+		e.logger.Println("Failed to send transaction", err)
 		return
 	}
 
-	e.logger.Info("Trade executed successfully",
-		zap.String("signature", signature),
-		zap.String("fromToken", tx.FromToken),
-		zap.String("toToken", tx.ToToken),
-		zap.Uint64("amount", amount))
+	e.logger.Println("Trade executed successfully",
+		"signature", signature,
+		"fromToken", tx.FromToken,
+		"toToken", tx.ToToken,
+		"amount", amount)
 }

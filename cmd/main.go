@@ -30,7 +30,7 @@ func main() {
 		logger.Fatal("Failed to initialize wallet", err)
 	}
 
-	strategy := copytrading.NewStrategy(cfg.Strategy, logger)
+	strategy := copytrading.NewStrategy(*cfg, logger)
 
 	monitor := copytrading.NewMonitor(client, cfg.Monitoring.Wallets, logger)
 
@@ -43,11 +43,11 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigCh
-		logger.Info("Shutting down gracefully...")
+		logger.Println("Shutting down gracefully...")
 		cancel()
 	}()
 
-	logger.Info("Starting Solana copytrading bot...")
+	logger.Println("Starting Solana copytrading bot...")
 
 	txCh := make(chan *solana.Transaction)
 	go monitor.Start(ctx, txCh)
@@ -57,7 +57,7 @@ func main() {
 		case tx := <-txCh:
 			go executor.ProcessTransaction(ctx, tx)
 		case <-ctx.Done():
-			logger.Info("Bot stopped")
+			logger.Println("Bot stopped")
 			return
 		}
 	}
