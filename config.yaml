@@ -1,0 +1,25 @@
+solana:
+  endpoint: "https://api.mainnet-beta.solana.com"
+  network: "mainnet"
+
+wallet:
+  private_key: "YOUR_PRIVATE_KEY_HERE" # Replace with your actual private key
+
+monitoring:
+  wallets:
+    - "WALLET_ADDRESS_1" # Replace with the wallet addresses you want to copy
+    - "WALLET_ADDRESS_2"
+  poll_interval: 10 # seconds
+  confirm_level: 1
+
+strategy:
+  type: "mirror"
+  max_slippage: 1.0 # 1%
+  min_trade_size: 0.1 # in SOL
+  max_trade_size: 10.0 # in SOL
+  trade_delay: 500 # milliseconds
+  token_whitelist:
+    - "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" # USDC
+    - "So11111111111111111111111111111111111111112" # Wrapped SOL
+    - "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB" # USDT
+  token_blacklist: []
